@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora de Áreas</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #eef1f7;
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+    }
+    #app {
+      background: #fff;
+      padding: 25px;
+      border-radius: 18px;
+      width: 400px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    .resultado {
+      margin-top: 20px;
+      background: #f3f6ff;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+    .formula {
+      opacity: 0.8;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h1>Calculadora de Áreas</h1>
+
+    <select v-model="figura">
+      <option value="">Seleccione una figura</option>
+      <option value="cuadrado">Cuadrado</option>
+      <option value="rectangulo">Rectángulo</option>
+      <option value="circulo">Círculo</option>
+      <option value="triangulo">Triángulo</option>
+    </select>
+
+    <div v-if="figura === 'cuadrado'">
+      <input type="number" v-model.number="lado" placeholder="Lado">
+    </div>
+
+    <div v-if="figura === 'rectangulo'">
+      <input type="number" v-model.number="base" placeholder="Base">
+      <input type="number" v-model.number="altura" placeholder="Altura">
+    </div>
+
+    <div v-if="figura === 'circulo'">
+      <input type="number" v-model.number="radio" placeholder="Radio">
+    </div>
+
+    <div v-if="figura === 'triangulo'">
+      <input type="number" v-model.number="base" placeholder="Base">
+      <input type="number" v-model.number="altura" placeholder="Altura">
+    </div>
+
+    <div class="resultado" v-if="area">
+      Área: {{ area }}
+      <div class="formula">{{ formula }}</div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          figura: "",
+          lado: null,
+          base: null,
+          altura: null,
+          radio: null
+        };
+      },
+
+      computed: {
+        area() {
+          if (this.figura === "cuadrado" && this.lado) return (this.lado ** 2).toFixed(2);
+          if (this.figura === "rectangulo" && this.base && this.altura) return (this.base * this.altura).toFixed(2);
+          if (this.figura === "circulo" && this.radio) return (Math.PI * this.radio ** 2).toFixed(2);
+          if (this.figura === "triangulo" && this.base && this.altura) return ((this.base * this.altura) / 2).toFixed(2);
+          return "";
+        },
+
+        formula() {
+          if (this.figura === "cuadrado") return "Fórmula: lado × lado";
+          if (this.figura === "rectangulo") return "Fórmula: base × altura";
+          if (this.figura === "circulo") return "Fórmula: π × radio²";
+          if (this.figura === "triangulo") return "Fórmula: (base × altura) / 2";
+          return "";
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
