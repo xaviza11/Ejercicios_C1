@@ -11,7 +11,15 @@
 </template>
 
 <script setup lang="ts">
-import { students } from '../assets/data/students';
+import { ref, onMounted } from 'vue';
+import type { Student } from '../models/student.interface';
+import { loadStudents } from '../services/usersService';
+
+const students = ref<Student[]>([]);
+
+onMounted(async () => {
+  students.value = await loadStudents();
+});
 </script>
 
 <style scoped>

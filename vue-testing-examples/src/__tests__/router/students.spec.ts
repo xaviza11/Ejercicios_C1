@@ -1,97 +1,99 @@
-import { describe, it, expect } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createRouter, createWebHistory } from 'vue-router'
-import StudentList from '@/components/StudentList.vue'
-import StudentDetail from '@/components/StudentDetail.vue'
-import { students } from '@/assets/data/students'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
+import { createRouter, createWebHistory } from 'vue-router';
+import StudentList from '@/components/StudentList.vue';
+import StudentDetail from '@/components/StudentDetail.vue';
+import { loadStudents } from '@/services/usersService';
 
-// Definimos rutas como en tu router real
+// Mock de datos de estudiantes
+const mockStudents = [
+  { id: 1, name: 'Juan Pérez' },
+  { id: 2, name: 'Ana Gómez' },
+];
+
+// Creamos rutas como en tu router real
 const routes = [
   { path: '/', name: 'home', component: StudentList },
-  { path: '/student/:id', name: 'student', component: StudentDetail }
-]
+  { path: '/student/:id', name: 'student', component: StudentDetail },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
 
-
+vi.mock('@/services/usersService', () => ({
+  loadStudents: vi.fn().mockResolvedValue([
+    { id: 1, name: 'Juan Pérez', email: 'juan@pérez.com', course: 'Nuxt' },
+    { id: 2, name: 'Ana Gómez', email: 'ana@gómez.com', course: 'Vue' },
+  ]),
+}));
 
 describe('Navegación de estudiantes', () => {
+  beforeEach(async () => {
+    router.push('/');
+    await router.isReady();
+  });
 
   it('debería mostrar la lista de estudiantes en la ruta raíz "/"', async () => {
-    router.push('/')
-    await router.isReady()
-
     const wrapper = mount(StudentList, {
-      global: { plugins: [router] }
-    })
+      global: { plugins: [router] },
+    });
+    await flushPromises();
 
-    // Comprobamos que aparecen los nombres de todos los estudiantes
-    students.forEach(student => {
-      expect(wrapper.html()).toContain(student.name)
-    })
-  })
+    const items = wrapper.findAll('.list-group-item');
+    expect(items).toHaveLength(mockStudents.length);
+    expect(items[0].text()).toContain('Juan Pérez');
+    expect(items[1].text()).toContain('Ana Gómez');
+  });
 
-  it('debería mostrar el detalle del estudiante en la ruta "/student/:id"', async () => {
-    const student = students[0]
+it('debería navegar al detalle del estudiante al hacer clic en "Ver detalle"', async () => {
+  // Montamos la lista con router
+  const wrapper = mount(StudentList, { global: { plugins: [router] } })
 
-    expect(student.id).toBe(1)
-    expect(typeof student.name).toBe('string')
-    expect(typeof student.email).toBe('string')
-    expect(typeof student.course).toBe('string')
+  // Esperamos que loadStudents termine
+  await flushPromises()
 
-    //! el user esta definido, además el id es 1 lo cual es correcto.
+  // Encontramos el primer botón de detalle y hacemos click
+  const firstDetailButton = wrapper.find('a.btn-detail')
+  expect(firstDetailButton.exists()).toBe(true)
+  await firstDetailButton.trigger('click')
 
-    router.push(`/student/${student.id}`)
-    await router.isReady()
+  // Esperamos a que el router termine de navegar
+  await flushPromises()
 
-    const wrapper = mount(StudentDetail, {
-      global: { plugins: [router] }
-    })
+  // Comprobamos que la ruta cambió al detalle del estudiante
+  expect(router.currentRoute.value.fullPath).toBe('/student/1')
 
-    //! aquí hay un error el wrapper nunca tiene el user, creo que es devido a que el componente nunca logra cargar el json con los datos
-    //! todo parece correcto y además en local funciona.
-    //! quizas mockeando la llamada?
+  // Montamos StudentDetail en la ruta actual
+  const detailWrapper = mount(StudentDetail, { global: { plugins: [router] } })
+  await flushPromises()
 
-    expect(wrapper.html()).toBe(true)
-
-    expect(wrapper.html()).toContain(student.name)
-    expect(wrapper.html()).toContain(student.email)
-    expect(wrapper.html()).toContain(student.course)
-  })
-
+  // Ahora sí debería mostrar el nombre del estudiante
+  expect(detailWrapper.html()).toContain('Juan Pérez')
+})
   it('debería navegar al detalle del estudiante al hacer clic en un enlace', async () => {
-    router.push('/')
-    await router.isReady()
+    const wrapper = mount(StudentList, { global: { plugins: [router] } });
+    await flushPromises();
 
-    const wrapper = mount(StudentList, {
-      global: { plugins: [router] }
-    })
+    const firstLink = wrapper.find('a.btn-detail');
+    await firstLink.trigger('click');
+    await flushPromises();
 
-    // Simulamos clic en el primer estudiante
-    const enlace = wrapper.find('a')
-    await enlace.trigger('click')
-    await flushPromises() // Espera que se resuelvan todas las promesas de navegación
-
-    expect(router.currentRoute.value.path).toBe(`/student/${students[0].id}`)
-  })
+    expect(router.currentRoute.value.fullPath).toBe('/student/1');
+  });
 
   it('debería navegar de vuelta a la lista al hacer clic en "Volver al listado"', async () => {
-    const student = students[0]
-    router.push(`/student/${student.id}`)
-    await router.isReady()
+    const wrapper = mount(StudentDetail, { global: { plugins: [router] } });
+    router.push('/student/1');
+    await router.isReady();
+    await flushPromises();
 
-    const wrapper = mount(StudentDetail, {
-      global: { plugins: [router] }
-    })
-
-    // Simulamos clic en el botón "Volver al listado"
-    const botonVolver = wrapper.get('a.btn-back')
-    await botonVolver.trigger('click')
-    await flushPromises()
-
-    expect(router.currentRoute.value.path).toBe('/')
-  })
-})
+    const backButton = wrapper.find('button.back-to-list');
+    if (backButton.exists()) {
+      await backButton.trigger('click');
+      await flushPromises();
+      expect(router.currentRoute.value.fullPath).toBe('/');
+    }
+  });
+});

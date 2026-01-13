@@ -15,13 +15,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { students } from '../assets/data/students'
 import type { Student } from '../models/student.interface'
+import { loadStudents } from '../services/usersService'
 
 const route = useRoute()
-const studentId = Number(route.params.id)
-const student: Student | undefined = students.find((s) => s.id === studentId)
+const student = ref<Student | undefined>()
+
+onMounted(async () => {
+  const students = await loadStudents()
+  const studentId = Number(route.params.id)
+  student.value = students.find((s) => s.id === studentId)
+})
 </script>
 
 <style scoped>
