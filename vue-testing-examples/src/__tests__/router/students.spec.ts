@@ -48,28 +48,21 @@ describe('Navegación de estudiantes', () => {
   });
 
 it('debería navegar al detalle del estudiante al hacer clic en "Ver detalle"', async () => {
-  // Montamos la lista con router
   const wrapper = mount(StudentList, { global: { plugins: [router] } })
 
-  // Esperamos que loadStudents termine
   await flushPromises()
 
-  // Encontramos el primer botón de detalle y hacemos click
   const firstDetailButton = wrapper.find('a.btn-detail')
   expect(firstDetailButton.exists()).toBe(true)
   await firstDetailButton.trigger('click')
 
-  // Esperamos a que el router termine de navegar
   await flushPromises()
 
-  // Comprobamos que la ruta cambió al detalle del estudiante
   expect(router.currentRoute.value.fullPath).toBe('/student/1')
 
-  // Montamos StudentDetail en la ruta actual
   const detailWrapper = mount(StudentDetail, { global: { plugins: [router] } })
   await flushPromises()
 
-  // Ahora sí debería mostrar el nombre del estudiante
   expect(detailWrapper.html()).toContain('Juan Pérez')
 })
   it('debería navegar al detalle del estudiante al hacer clic en un enlace', async () => {
