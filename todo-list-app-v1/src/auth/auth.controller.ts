@@ -40,7 +40,10 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard())
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden. Token related' })
+  @ApiResponse({ status: 404, description: 'User not found' })
   retrieve(@GetUser() user: RetrieveUserDto) {
     return this.authService.retrieveUser(user);
   }
